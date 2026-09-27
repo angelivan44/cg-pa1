@@ -45,7 +45,10 @@ int Application::run(int argc, char** argv) {
     escena.init();
     camara.objetivo = escena.findBody("Tierra");
     setCameraMode(Camera::GENERAL);
-    CREAR_DIR(capturePath("").c_str());
+    // Sin la barra final: _mkdir de Windows no siempre la acepta
+    std::string carpeta = capturePath("");
+    if (!carpeta.empty() && carpeta[carpeta.size() - 1] == '/') carpeta.erase(carpeta.size() - 1);
+    CREAR_DIR(carpeta.c_str());
 
     glutDisplayFunc(displayCallback);
     glutReshapeFunc(reshapeCallback);
