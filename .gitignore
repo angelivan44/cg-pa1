@@ -1,0 +1,75 @@
+# =============================================================
+#  Solo se versiona el codigo fuente.
+#
+#  Se ignora TODO por defecto y se permite explicitamente lo que
+#  es codigo. Asi cualquier archivo nuevo (capturas, informes,
+#  logs, binarios) queda fuera sin tener que agregarlo aqui.
+# =============================================================
+
+# 1. Ignorar todo lo que hay en la raiz del proyecto
+/*
+
+# 2. Permitir solo el codigo y su configuracion
+!/.gitignore
+!/CMakeLists.txt
+!/src/
+!/include/
+!/third_party/
+!/tools/
+
+# tools/: solo los scripts, no el entorno de Python
+/tools/*
+!/tools/glb_a_obj.py
+!/tools/bmp_a_png.sh
+
+# third_party/: solo la biblioteca stb_image
+/third_party/*
+!/third_party/stb_image.h
+
+# 3. Aunque esten dentro de src/ o include/, nunca subir:
+
+# Sistema operativo
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+
+# Temporales de Word/Office y editores
+~$*
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+.vscode/
+.idea/
+*.code-workspace
+
+# Compilacion
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.exe
+*.out
+*.dSYM/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+# Python
+__pycache__/
+*.pyc
+
+# -------------------------------------------------------------
+#  Referencia: lo que queda fuera por la regla 1
+#    build/           compilacion de CMake
+#    preview/         daemon de desarrollo (build, capturas, logs)
+#    capturas/        figuras generadas con --capturas
+#    assets/          texturas y modelos descargados (~26 MB)
+#    *.docx *.pdf     informe
+#    README.md        documentacion local
+#    tools/.venv/     entorno de Python del conversor
+# -------------------------------------------------------------
