@@ -20,7 +20,6 @@
 # tools/: solo los scripts, no el entorno de Python
 /tools/*
 !/tools/glb_a_obj.py
-!/tools/bmp_a_png.sh
 
 # third_party/: solo la biblioteca stb_image
 /third_party/*
@@ -66,8 +65,7 @@ __pycache__/
 # -------------------------------------------------------------
 #  Referencia: lo que queda fuera por la regla 1
 #    build/           compilacion de CMake
-#    preview/         daemon de desarrollo (build, capturas, logs)
-#    capturas/        figuras generadas con --capturas
+#    preview/         daemon de desarrollo (build y logs)
 #    assets/          texturas y modelos descargados (~26 MB)
 #    *.docx *.pdf     informe
 #    README.md        documentacion local

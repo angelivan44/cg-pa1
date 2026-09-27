@@ -5,8 +5,6 @@
 //
 //  Compilar:  cmake -S . -B build && cmake --build build
 //  Ejecutar:  ./build/sistema_solar
-//             ./build/sistema_solar --capturas   genera las figuras
-//                                                del informe y sale
 // =============================================================
 #include "Application.hpp"
 

@@ -3,29 +3,17 @@
 // =============================================================
 #include "Application.hpp"
 #include "GLHeaders.hpp"
-#include "Screenshot.hpp"
 
-#include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <string>
 #include <vector>
-#include <sys/stat.h>
-
-#ifdef _WIN32
-  #include <direct.h>
-  #define CREAR_DIR(ruta) _mkdir(ruta)
-#else
-  #define CREAR_DIR(ruta) mkdir(ruta, 0755)
-#endif
 
 Application* Application::instancia = 0;
 
 Application::Application()
     : anchoVentana(1280), altoVentana(720), pausado(false), mostrarHUD(true),
-      velocidad(1.0f), ultimoTiempo(0), numCaptura(0),
-      botonMouse(-1), mouseX(0), mouseY(0), modoCapturas(false), pasoCaptura(0) {
+      velocidad(1.0f), ultimoTiempo(0), botonMouse(-1), mouseX(0), mouseY(0) {
     instancia = this;
 }
 
@@ -33,9 +21,6 @@ Application::Application()
 //  Inicio
 // ------------------------------------------------------------------
 int Application::run(int argc, char** argv) {
-    for (int i = 1; i < argc; i++)
-        if (strcmp(argv[i], "--capturas") == 0) modoCapturas = true;
-
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(anchoVentana, altoVentana);
@@ -45,10 +30,6 @@ int Application::run(int argc, char** argv) {
     escena.init();
     camara.objetivo = escena.findBody("Tierra");
     setCameraMode(Camera::GENERAL);
-    // Sin la barra final: _mkdir de Windows no siempre la acepta
-    std::string carpeta = capturePath("");
-    if (!carpeta.empty() && carpeta[carpeta.size() - 1] == '/') carpeta.erase(carpeta.size() - 1);
-    CREAR_DIR(carpeta.c_str());
 
     glutDisplayFunc(displayCallback);
     glutReshapeFunc(reshapeCallback);
@@ -59,8 +40,7 @@ int Application::run(int argc, char** argv) {
     ultimoTiempo = glutGet(GLUT_ELAPSED_TIME);
     glutTimerFunc(16, timerCallback, 0);
 
-    if (modoCapturas) printf("\nGenerando figuras en %s ...\n", capturePath("").c_str());
-    else printHelp();
+    printHelp();
     glutMainLoop();
     return 0;
 }
@@ -149,7 +129,7 @@ void Application::drawHUD() {
     snprintf(l, sizeof(l), "[Z] Depth buffer: %s   [N] Plano cercano: %.1f   [B] Transparencia: %s   [O] Orbitas: %s",
              onOff(opciones.depthBuffer), camara.nearPlane(), onOff(opciones.transparencias), onOff(opciones.orbitas));
     lineas.push_back(l);
-    snprintf(l, sizeof(l), "[ESPACIO] %s   [,/.] velocidad x%.2f   [R] reiniciar   [C] captura   [H] ocultar",
+    snprintf(l, sizeof(l), "[ESPACIO] %s   [,/.] velocidad x%.2f   [R] reiniciar   [H] ocultar",
              pausado ? "reanudar" : "pausa", velocidad);
     lineas.push_back(l);
 
@@ -172,85 +152,6 @@ void Application::drawHUD() {
     glMatrixMode(GL_MODELVIEW);
 }
 
-// ------------------------------------------------------------------
-//  Figuras para el informe (./sistema_solar --capturas)
-//  Cada paso parte de la configuracion inicial y cambia UN parametro,
-//  asi cada par de imagenes muestra el efecto de ese parametro.
-// ------------------------------------------------------------------
-struct PasoCaptura { const char* archivo; const char* descripcion; };
-
-static const PasoCaptura CAPTURAS[] = {
-    { "fig01_vista_general",        "Vista general, configuracion inicial" },
-    { "fig02_vista_superior",       "Camara superior: orbitas completas" },
-    { "fig03_tierra_iluminacion",   "Tierra: las tres luces encendidas" },
-    { "fig04_tierra_solo_puntual",  "Tierra: solo la luz puntual del Sol (sin relleno ni ambiente)" },
-    { "fig05_tierra_sin_sol",       "Tierra: luz del Sol apagada (solo relleno + ambiente)" },
-    { "fig06_tierra_ambiente_alto", "Tierra: luz ambiental alta (0.30)" },
-    { "fig07_tierra_relleno_movido","Tierra: luz de relleno girada 180 grados" },
-    { "fig08_jupiter_flat",         "Jupiter: malla baja con sombreado Flat" },
-    { "fig09_jupiter_gouraud",      "Jupiter: malla baja con sombreado Gouraud" },
-    { "fig10_neptuno_mate",         "Neptuno: material mate (sin especular)" },
-    { "fig11_neptuno_brillante",    "Neptuno: material brillante (especular 0.7, brillo 40)" },
-    { "fig12_saturno_texturas",     "Saturno: texturas activadas" },
-    { "fig13_saturno_sin_texturas", "Saturno: texturas desactivadas (solo colores de material)" },
-    { "fig14_saturno_sin_blend",    "Saturno: anillos sin mezcla alfa" },
-    { "fig15_tierra_depth_on",      "Tierra de cerca con depth buffer" },
-    { "fig16_tierra_depth_off",     "Tierra de cerca sin depth buffer: se ve el hemisferio trasero" },
-    { "fig17_clipping_cercano",     "Plano cercano en 60: se recorta todo lo que esta a menos de 60 de la camara" },
-    { "fig18_modelo_iss_hubble",    "Modelos descargados: ISS y Hubble junto a la Tierra" },
-    { "fig19_modelo_cassini",       "Modelo descargado: Cassini junto a Saturno" },
-    { "fig20_modelo_voyager",       "Modelo descargado: Voyager" },
-    { "fig21_panel_controles",      "Vista general con el panel de controles" },
-};
-static const int NUM_CAPTURAS = sizeof(CAPTURAS) / sizeof(CAPTURAS[0]);
-
-// Sigue a un objeto. "yaw" se mide desde la direccion del Sol visto
-// desde el objeto: 0 = camara entre el Sol y el objeto (lado de dia),
-// 90 = de costado (se ve el limite dia/noche).
-void Application::followBody(const char* nombre, float distancia, float yaw, float pitch) {
-    camara.objetivo = escena.findBody(nombre);
-    setCameraMode(Camera::SEGUIR);
-    float p[3];
-    escena.bodyPosition(camara.objetivo, p);
-    camara.distancia = distancia;
-    camara.yaw = atan2f(-p[0], -p[2]) * 180.0f / 3.14159265f + yaw;
-    camara.pitch = pitch;
-    opciones.orbitas = false;     // de cerca la linea de la orbita cruza el objeto
-}
-
-void Application::setupCapture(int paso) {
-    opciones.reset();
-    luces.reset();
-    camara.nivelCerca = 0;
-    escena.setTime(6.0f);
-    setCameraMode(Camera::GENERAL);
-    mostrarHUD = false;
-
-    switch (paso) {
-        case 1:  setCameraMode(Camera::SUPERIOR); break;
-        case 2:  followBody("Tierra", 3.2f, 95.0f, 12.0f); break;
-        case 3:  followBody("Tierra", 3.2f, 95.0f, 12.0f); luces.rellenoActivo = false; luces.nivelAmbiente = 0; break;
-        case 4:  followBody("Tierra", 3.2f, 95.0f, 12.0f); luces.solActiva = false; break;
-        case 5:  followBody("Tierra", 3.2f, 95.0f, 12.0f); luces.nivelAmbiente = 2; break;
-        case 6:  followBody("Tierra", 3.2f, 95.0f, 12.0f); luces.anguloRelleno += 180.0f; break;
-        case 7:  followBody("Jupiter", 5.5f, 35.0f, 10.0f); opciones.detalleMalla = 0; opciones.gouraud = false; break;
-        case 8:  followBody("Jupiter", 5.5f, 35.0f, 10.0f); opciones.detalleMalla = 0; break;
-        case 9:  followBody("Neptuno", 3.0f, 30.0f, 10.0f); break;
-        case 10: followBody("Neptuno", 3.0f, 30.0f, 10.0f); opciones.materialBrillante = true; break;
-        case 11: followBody("Saturno", 7.0f, 25.0f, -20.0f); break;
-        case 12: followBody("Saturno", 7.0f, 25.0f, -20.0f); opciones.texturas = false; break;
-        case 13: followBody("Saturno", 7.0f, 25.0f, -20.0f); opciones.transparencias = false; break;
-        case 14: followBody("Tierra", 2.6f, 20.0f, 15.0f); break;
-        case 15: followBody("Tierra", 2.6f, 20.0f, 15.0f); opciones.depthBuffer = false; break;
-        case 16: camara.nivelCerca = 2; break;
-        case 17: followBody("Tierra", 2.4f, 40.0f, 20.0f); break;
-        case 18: followBody("Cassini", 1.1f, 30.0f, 15.0f); break;
-        case 19: followBody("Voyager", 1.3f, 30.0f, 20.0f); break;
-        case 20: mostrarHUD = true; break;
-    }
-    camara.applyProjection(anchoVentana, altoVentana);
-}
-
 void Application::printHelp() const {
     printf("\nControles:\n"
            "  1 General  2 Superior  3 Seguir objeto  4 Rasante   TAB siguiente objeto\n"
@@ -260,25 +161,14 @@ void Application::printHelp() const {
            "  G Flat / Gouraud   V detalle de malla   M material mate / brillante\n"
            "  T texturas   Z depth buffer   N plano cercano (clipping)\n"
            "  B transparencias   O orbitas   ESPACIO pausa   , . velocidad\n"
-           "  R reiniciar   C captura   H mostrar/ocultar panel   ESC salir\n\n");
+           "  R reiniciar   H mostrar/ocultar panel   ESC salir\n\n");
 }
 
 // ------------------------------------------------------------------
 //  Eventos
 // ------------------------------------------------------------------
 void Application::onDisplay() {
-    if (modoCapturas) setupCapture(pasoCaptura);
     render();
-
-    if (modoCapturas) {
-        glFinish();
-        Screenshot::saveBMP(capturePath(std::string(CAPTURAS[pasoCaptura].archivo) + ".bmp"));
-        printf("   %s\n", CAPTURAS[pasoCaptura].descripcion);
-        pasoCaptura++;
-        if (pasoCaptura >= NUM_CAPTURAS) exit(0);
-        glutPostRedisplay();
-        return;
-    }
     glutSwapBuffers();
 }
 
@@ -292,7 +182,7 @@ void Application::onTimer() {
     int ahora = glutGet(GLUT_ELAPSED_TIME);
     float dt = (ahora - ultimoTiempo) / 1000.0f;
     ultimoTiempo = ahora;
-    if (!pausado && !modoCapturas) escena.update(dt * velocidad);
+    if (!pausado) escena.update(dt * velocidad);
     glutPostRedisplay();
     glutTimerFunc(16, timerCallback, 0);    // ~60 cuadros por segundo
 }
@@ -332,13 +222,6 @@ void Application::onKey(unsigned char tecla) {
         case ' ': pausado = !pausado; break;
         case 'h': case 'H': mostrarHUD = !mostrarHUD; break;
         case 'r': case 'R': resetAll(); break;
-        case 'c': case 'C': {
-            char nombre[64];
-            snprintf(nombre, sizeof(nombre), "captura_%d.bmp", ++numCaptura);
-            render();                  // dibuja en el buffer trasero y lo lee
-            Screenshot::saveBMP(capturePath(nombre));
-            break;
-        }
     }
 }
 

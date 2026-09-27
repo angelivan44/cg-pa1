@@ -4,7 +4,6 @@
 #    cmake -S . -B build          configura (una sola vez)
 #    cmake --build build          compila
 #    ./build/sistema_solar        ejecuta
-#    cmake --build build --target capturas   genera las figuras en capturas/
 #    cmake --build build --target modelos    reconvierte los .glb de NASA a .obj
 #
 #  Windows: usar la terminal "MSYS2 MINGW64" e instalar una vez
@@ -41,7 +40,6 @@ add_executable(sistema_solar
     src/Material.cpp
     src/Texture.cpp
     src/Model.cpp
-    src/Screenshot.cpp
 )
 
 target_include_directories(sistema_solar PRIVATE
@@ -49,14 +47,9 @@ target_include_directories(sistema_solar PRIVATE
     ${CMAKE_SOURCE_DIR}/third_party
 )
 
-# Rutas absolutas: el programa encuentra assets/ y guarda capturas/
-# en la carpeta del proyecto aunque se ejecute desde build/.
-# CAPTURES_DIR se puede cambiar (el preview usa -DCAPTURES_DIR=preview/capturas).
-# CMake quita la barra final de las rutas, por eso se agrega abajo.
-set(CAPTURES_DIR "${CMAKE_SOURCE_DIR}/capturas" CACHE PATH "Carpeta donde se guardan las capturas")
+# Ruta absoluta: el programa encuentra assets/ aunque se ejecute desde build/
 target_compile_definitions(sistema_solar PRIVATE
     ASSETS_DIR="${CMAKE_SOURCE_DIR}/assets/"
-    CAPTURES_DIR="${CAPTURES_DIR}/"
 )
 
 if(WIN32)
@@ -77,15 +70,6 @@ else()
     target_compile_options(sistema_solar PRIVATE -Wall)
     target_link_libraries(sistema_solar PRIVATE OpenGL::GL OpenGL::GLU GLUT::GLUT)
 endif()
-
-# --- Figuras para el informe ---------------------------------------
-add_custom_target(capturas
-    COMMAND sistema_solar --capturas
-    COMMAND sh ${CMAKE_SOURCE_DIR}/tools/bmp_a_png.sh
-    DEPENDS sistema_solar
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Generando las figuras en capturas/"
-)
 
 # --- Conversion de los modelos de NASA (GLB -> OBJ) -----------------
 set(GLB ${CMAKE_SOURCE_DIR}/assets/models/glb)

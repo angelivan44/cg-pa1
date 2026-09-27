@@ -29,18 +29,13 @@ private:
     bool  pausado, mostrarHUD;
     float velocidad;          // multiplicador del tiempo de animacion
     int   ultimoTiempo;       // ms, para medir el tiempo entre cuadros
-    int   numCaptura;
     int   botonMouse, mouseX, mouseY;
-    bool  modoCapturas;       // --capturas: genera las figuras y sale
-    int   pasoCaptura;
 
     void initOpenGL();
     void render();
     void drawHUD();
     void resetAll();
     void setCameraMode(Camera::Mode modo);
-    void followBody(const char* nombre, float distancia, float yaw, float pitch);
-    void setupCapture(int paso);
     void printHelp() const;
 
     // Manejo de eventos

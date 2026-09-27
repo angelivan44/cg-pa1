@@ -26,9 +26,6 @@
 // Windows solo expone cabeceras de OpenGL 1.1; estas constantes son
 // de OpenGL 1.2 y el driver si las soporta. Se definen con su valor
 // oficial para que el programa compile igual en los tres sistemas.
-#ifndef GL_BGR
-  #define GL_BGR 0x80E0
-#endif
 #ifndef GL_CLAMP_TO_EDGE
   #define GL_CLAMP_TO_EDGE 0x812F
 #endif
@@ -39,21 +36,13 @@
   #define GL_SEPARATE_SPECULAR_COLOR 0x81FA
 #endif
 
-// --- Rutas del proyecto --------------------------------------------
-// CMake define ASSETS_DIR y CAPTURES_DIR con rutas absolutas, asi el
-// programa encuentra las texturas y guarda las capturas en la carpeta
-// del proyecto aunque se ejecute desde build/.
+// --- Ruta de los recursos ------------------------------------------
+// CMake define ASSETS_DIR con la ruta absoluta a assets/, asi el
+// programa encuentra las texturas aunque se ejecute desde build/.
 #ifndef ASSETS_DIR
   #define ASSETS_DIR "assets/"
-#endif
-#ifndef CAPTURES_DIR
-  #define CAPTURES_DIR "capturas/"
 #endif
 
 inline std::string assetPath(const std::string& relativa) {
     return std::string(ASSETS_DIR) + relativa;
-}
-
-inline std::string capturePath(const std::string& archivo) {
-    return std::string(CAPTURES_DIR) + archivo;
 }
