@@ -3,7 +3,7 @@
 //
 //  Une los modulos: crea la ventana con GLUT, configura OpenGL,
 //  recibe teclado y mouse, y en cada cuadro ordena el render:
-//  camara -> luces -> escena -> panel (HUD).
+//  camara -> luces -> escena.
 //  GLUT solo acepta funciones sueltas como callbacks, por eso hay
 //  funciones estaticas que reenvian a la unica instancia.
 // =============================================================
@@ -26,14 +26,13 @@ private:
     RenderOptions opciones;
 
     int   anchoVentana, altoVentana;
-    bool  pausado, mostrarHUD;
+    bool  pausado;
     float velocidad;          // multiplicador del tiempo de animacion
     int   ultimoTiempo;       // ms, para medir el tiempo entre cuadros
     int   botonMouse, mouseX, mouseY;
 
     void initOpenGL();
     void render();
-    void drawHUD();
     void resetAll();
     void setCameraMode(Camera::Mode modo);
     void printHelp() const;

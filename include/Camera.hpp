@@ -34,5 +34,4 @@ public:
     void  rotate(float dYaw, float dPitch);
     void  zoom(float factor);
     float nearPlane() const;
-    const char* modeName() const;
 };

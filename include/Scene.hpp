@@ -48,15 +48,8 @@ private:
         GLuint      textura;
     };
 
-    // Cinturon de asteroides: copias del modelo de Bennu con tamano,
-    // posicion y giro distintos (instancias de un mismo modelo)
-    struct Asteroid {
-        float distancia, fase, altura, escala, velOrbita, eje[3], velGiro;
-    };
-
     std::vector<Body>     cuerpos;
-    std::vector<Asteroid> cinturon;
-    Model  modeloISS, modeloHubble, modeloCassini, modeloVoyager, modeloBennu;
+    Model  modeloISS, modeloVoyager;          // modelos descargados de NASA
     GLuint texAnillos, texHalo;
     GLUquadric* cuadrica;
     float  tiempo;                     // segundos de animacion transcurridos
@@ -67,7 +60,6 @@ private:
     void drawSphere(float radio, const RenderOptions& o) const;
     void drawOrbits(const RenderOptions& o) const;
     void drawBody(int i, const RenderOptions& o) const;
-    void drawAsteroidBelt(const RenderOptions& o) const;
     void drawRings(const RenderOptions& o) const;
     void drawSunGlow(const RenderOptions& o) const;
 };

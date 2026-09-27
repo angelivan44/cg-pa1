@@ -12,46 +12,31 @@
 static const float PI = 3.14159265f;
 
 // Indices de los cuerpos (mismo orden que la tabla del constructor)
-enum {
-    SOL, MERCURIO, VENUS, TIERRA, LUNA, ISS, HUBBLE, MARTE, BENNU,
-    JUPITER, SATURNO, CASSINI, URANO, NEPTUNO, VOYAGER, NUM_CUERPOS
-};
+enum { SOL, TIERRA, LUNA, ISS, MARTE, JUPITER, SATURNO, VOYAGER, NUM_CUERPOS };
 
 // Anillos de Saturno (radio interno y externo, en radios de Saturno)
 static const float ANILLO_INTERNO = 1.25f;
 static const float ANILLO_EXTERNO = 2.35f;
 
+// Pocos objetos, grandes y cercanos, para que en la vista general se
+// distinga cada uno con su textura o su modelo.
 Scene::Scene() : texAnillos(0), texHalo(0), cuadrica(0), tiempo(0.0f) {
     const Body tabla[NUM_CUERPOS] = {
     //   nombre      padre    dist  vOrb  fase  radio  vRot   eje    color                 textura
-        { "Sol",      -1,     0.0f,  0.0f,   0, 3.00f,  4.0f,   7.3f, {1.0f, 0.8f, 0.3f}, "textures/2k_sun.jpg", 0, 0 },
-        { "Mercurio", -1,     5.6f, 24.0f,  40, 0.35f, 12.0f,   0.0f, {0.6f, 0.6f, 0.6f}, "textures/2k_mercury.jpg", 0, 0 },
-        { "Venus",    -1,     8.2f, 16.0f, 160, 0.60f, -6.0f,   2.6f, {0.9f, 0.7f, 0.4f}, "textures/2k_venus_atmosphere.jpg", 0, 0 },
-        { "Tierra",   -1,    11.5f, 10.0f, 250, 0.65f, 45.0f,  23.4f, {0.2f, 0.4f, 0.9f}, "textures/2k_earth_daymap.jpg", 0, 0 },
-        { "Luna",     TIERRA, 1.8f, 22.0f,   0, 0.18f,  0.0f,   6.7f, {0.7f, 0.7f, 0.7f}, "textures/2k_moon.jpg", 0, 0 },
-        { "ISS",      TIERRA, 0.95f,70.0f,  90, 0.14f,  0.0f,   0.0f, {0.8f, 0.8f, 0.8f}, 0, &modeloISS, 0 },
-        { "Hubble",   TIERRA, 1.25f,-45.0f,200, 0.11f,  0.0f,   0.0f, {0.8f, 0.8f, 0.8f}, 0, &modeloHubble, 0 },
-        { "Marte",    -1,    14.5f,  7.0f, 320, 0.45f, 40.0f,  25.2f, {0.8f, 0.35f, 0.2f}, "textures/2k_mars.jpg", 0, 0 },
-        { "Bennu",    -1,    18.0f,  4.0f, 210, 0.30f, 30.0f,  10.0f, {0.6f, 0.55f, 0.5f}, 0, &modeloBennu, 0 },
-        { "Jupiter",  -1,    24.0f,  3.5f,  60, 1.70f, 70.0f,   3.1f, {0.8f, 0.7f, 0.55f}, "textures/2k_jupiter.jpg", 0, 0 },
-        { "Saturno",  -1,    31.0f,  2.4f, 145, 1.40f, 65.0f,  26.7f, {0.9f, 0.8f, 0.55f}, "textures/2k_saturn.jpg", 0, 0 },
-        { "Cassini",  SATURNO,3.6f, 18.0f,  30, 0.30f,  0.0f,   0.0f, {0.8f, 0.8f, 0.8f}, 0, &modeloCassini, 0 },
-        { "Urano",    -1,    37.5f,  1.6f, 280, 0.95f,-45.0f,  97.8f, {0.6f, 0.85f, 0.9f}, "textures/2k_uranus.jpg", 0, 0 },
-        { "Neptuno",  -1,    43.0f,  1.2f,  20, 0.90f, 42.0f,  28.3f, {0.3f, 0.45f, 0.9f}, "textures/2k_neptune.jpg", 0, 0 },
-        { "Voyager",  -1,    49.0f,  0.6f, 100, 0.45f,  6.0f,   0.0f, {0.8f, 0.8f, 0.8f}, 0, &modeloVoyager, 0 },
+        { "Sol",      -1,     0.0f,  0.0f,   0, 2.20f,  4.0f,   7.3f, {1.0f, 0.8f, 0.3f}, "textures/2k_sun.jpg", 0, 0 },
+        { "Tierra",   -1,     6.5f, 12.0f, 100, 1.30f, 40.0f,  23.4f, {0.2f, 0.4f, 0.9f}, "textures/2k_earth_daymap.jpg", 0, 0 },
+        { "Luna",     TIERRA, 2.4f, 30.0f,  60, 0.38f,  0.0f,   6.7f, {0.7f, 0.7f, 0.7f}, "textures/2k_moon.jpg", 0, 0 },
+        { "ISS",      TIERRA, 1.8f,-60.0f, 200, 0.45f, 20.0f,   0.0f, {0.8f, 0.8f, 0.8f}, 0, &modeloISS, 0 },
+        { "Marte",    -1,    10.5f,  9.0f, 170, 0.95f, 35.0f,  25.2f, {0.8f, 0.35f, 0.2f}, "textures/2k_mars.jpg", 0, 0 },
+        { "Jupiter",  -1,    14.5f,  6.0f,  55, 2.10f, 50.0f,   3.1f, {0.8f, 0.7f, 0.55f}, "textures/2k_jupiter.jpg", 0, 0 },
+        { "Saturno",  -1,    20.0f,  4.0f, 140, 1.70f, 45.0f,  26.7f, {0.9f, 0.8f, 0.55f}, "textures/2k_saturn.jpg", 0, 0 },
+        { "Voyager",  -1,    26.0f,  3.0f, 215, 1.50f, 15.0f,   0.0f, {0.8f, 0.8f, 0.8f}, 0, &modeloVoyager, 0 },
     };
     cuerpos.assign(tabla, tabla + NUM_CUERPOS);
 }
 
 Scene::~Scene() {
     if (cuadrica) gluDeleteQuadric(cuadrica);
-}
-
-// Numero pseudoaleatorio reproducible (siempre el mismo cinturon)
-static unsigned int semilla = 12345u;
-static float aleatorio(float a, float b) {
-    semilla = semilla * 1103515245u + 12345u;
-    return a + (b - a) * ((semilla >> 8) & 0xFFFF) / 65535.0f;
 }
 
 void Scene::init() {
@@ -63,25 +48,10 @@ void Scene::init() {
 
     printf("Cargando modelos 3D (NASA 3D Resources, convertidos a OBJ)...\n");
     modeloISS.load(assetPath("models/iss.obj"));
-    modeloHubble.load(assetPath("models/hubble.obj"));
-    modeloCassini.load(assetPath("models/cassini.obj"));
     modeloVoyager.load(assetPath("models/voyager.obj"));
-    modeloBennu.load(assetPath("models/asteroide_bennu.obj"));
 
     cuadrica = gluNewQuadric();
     gluQuadricTexture(cuadrica, GL_TRUE);    // genera coordenadas (s,t) en la esfera
-
-    for (int i = 0; i < 90; i++) {
-        Asteroid a;
-        a.distancia = aleatorio(16.3f, 20.0f);
-        a.fase      = aleatorio(0.0f, 360.0f);
-        a.altura    = aleatorio(-0.45f, 0.45f);
-        a.escala    = aleatorio(0.05f, 0.15f);
-        a.velOrbita = 4.0f * powf(18.0f / a.distancia, 1.5f);   // mas lejos, mas lento
-        a.eje[0] = aleatorio(-1, 1); a.eje[1] = aleatorio(-1, 1); a.eje[2] = aleatorio(-1, 1);
-        a.velGiro   = aleatorio(20.0f, 90.0f);
-        cinturon.push_back(a);
-    }
 }
 
 void Scene::update(float segundos)  { tiempo += segundos; }
@@ -186,20 +156,6 @@ void Scene::drawBody(int i, const RenderOptions& o) const {
     glPopMatrix();
 }
 
-void Scene::drawAsteroidBelt(const RenderOptions& o) const {
-    if (!modeloBennu.isLoaded()) return;
-    for (size_t i = 0; i < cinturon.size(); i++) {
-        const Asteroid& a = cinturon[i];
-        glPushMatrix();
-        glRotatef(a.fase + a.velOrbita * tiempo, 0.0f, 1.0f, 0.0f);
-        glTranslatef(a.distancia, a.altura, 0.0f);
-        glRotatef(a.velGiro * tiempo, a.eje[0], a.eje[1], a.eje[2]);
-        glScalef(a.escala, a.escala, a.escala);
-        modeloBennu.draw(o.texturas);
-        glPopMatrix();
-    }
-}
-
 // Anillos: corona circular con la textura RGBA de Solar System Scope.
 // La coordenada s recorre el radio (del borde interno al externo),
 // asi cada franja de la imagen se convierte en un anillo.
@@ -286,7 +242,6 @@ void Scene::draw(const RenderOptions& o) const {
 
     drawOrbits(o);
     for (size_t i = 0; i < cuerpos.size(); i++) drawBody((int)i, o);
-    drawAsteroidBelt(o);
 
     drawRings(o);
     drawSunGlow(o);

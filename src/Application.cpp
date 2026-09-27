@@ -6,13 +6,11 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <string>
-#include <vector>
 
 Application* Application::instancia = 0;
 
 Application::Application()
-    : anchoVentana(1280), altoVentana(720), pausado(false), mostrarHUD(true),
+    : anchoVentana(1280), altoVentana(720), pausado(false),
       velocidad(1.0f), ultimoTiempo(0), botonMouse(-1), mouseX(0), mouseY(0) {
     instancia = this;
 }
@@ -79,77 +77,7 @@ void Application::render() {
     if (camara.modo == Camera::SEGUIR) escena.bodyPosition(camara.objetivo, objetivo);
     camara.applyView(objetivo);        // 1. matriz de vista (camara)
     luces.update();                    // 2. luces, con la vista ya cargada
-    escena.draw(opciones);     // 3. objetos
-    if (mostrarHUD) drawHUD();         // 4. panel 2D encima
-}
-
-// ------------------------------------------------------------------
-//  HUD: texto 2D encima de la escena con el estado de cada opcion
-// ------------------------------------------------------------------
-static void texto(float x, float y, const char* s) {
-    glRasterPos2f(x, y);
-    for (; *s; s++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *s);
-}
-
-static const char* onOff(bool v) { return v ? "ON" : "OFF"; }
-
-void Application::drawHUD() {
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, anchoVentana, 0, altoVentana);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    glDisable(GL_LIGHTING);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_TEXTURE_2D);
-
-    char l[160];
-    const char* niveles[] = { "bajo", "medio", "alto" };
-    std::vector<std::string> lineas;
-    snprintf(l, sizeof(l), "Camara: %s%s%s   (1-4, TAB objetivo, mouse / flechas / +-)",
-             camara.modeName(), camara.modo == Camera::SEGUIR ? " -> " : "",
-             camara.modo == Camera::SEGUIR ? escena.bodyName(camara.objetivo) : "");
-    lineas.push_back(l);
-    snprintf(l, sizeof(l), "[L] Luz puntual Sol: %s   [U] Atenuacion: %s", onOff(luces.solActiva), onOff(luces.atenuacion));
-    lineas.push_back(l);
-    snprintf(l, sizeof(l), "[K] Luz direccional relleno: %s   [ / ] direccion: %.0f grados",
-             onOff(luces.rellenoActivo), luces.anguloRelleno);
-    lineas.push_back(l);
-    snprintf(l, sizeof(l), "[A] Luz ambiental: %.2f", luces.ambientValue());
-    lineas.push_back(l);
-    snprintf(l, sizeof(l), "[G] Sombreado: %s   [V] Malla: %s (%d div.)",
-             opciones.gouraud ? "Gouraud (suave)" : "Flat (plano)",
-             niveles[opciones.detalleMalla], opciones.sphereDivisions());
-    lineas.push_back(l);
-    snprintf(l, sizeof(l), "[M] Material: %s   [T] Texturas: %s",
-             opciones.materialBrillante ? "brillante (especular)" : "mate", onOff(opciones.texturas));
-    lineas.push_back(l);
-    snprintf(l, sizeof(l), "[Z] Depth buffer: %s   [N] Plano cercano: %.1f   [B] Transparencia: %s   [O] Orbitas: %s",
-             onOff(opciones.depthBuffer), camara.nearPlane(), onOff(opciones.transparencias), onOff(opciones.orbitas));
-    lineas.push_back(l);
-    snprintf(l, sizeof(l), "[ESPACIO] %s   [,/.] velocidad x%.2f   [R] reiniciar   [H] ocultar",
-             pausado ? "reanudar" : "pausa", velocidad);
-    lineas.push_back(l);
-
-    // Fondo semitransparente para que el texto se lea sobre las estrellas
-    float alto = 18.0f * lineas.size() + 12.0f;
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(0.0f, 0.0f, 0.0f, 0.55f);
-    glRectf(6, altoVentana - 6 - alto, 640, altoVentana - 6);
-    glDisable(GL_BLEND);
-
-    glColor3f(0.95f, 0.95f, 0.85f);
-    for (size_t i = 0; i < lineas.size(); i++)
-        texto(14, altoVentana - 24 - 18.0f * i, lineas[i].c_str());
-
-    glEnable(GL_LIGHTING);
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
+    escena.draw(opciones);             // 3. objetos
 }
 
 void Application::printHelp() const {
@@ -161,7 +89,7 @@ void Application::printHelp() const {
            "  G Flat / Gouraud   V detalle de malla   M material mate / brillante\n"
            "  T texturas   Z depth buffer   N plano cercano (clipping)\n"
            "  B transparencias   O orbitas   ESPACIO pausa   , . velocidad\n"
-           "  R reiniciar   H mostrar/ocultar panel   ESC salir\n\n");
+           "  R reiniciar   ESC salir\n\n");
 }
 
 // ------------------------------------------------------------------
@@ -220,7 +148,6 @@ void Application::onKey(unsigned char tecla) {
         case ',': velocidad *= 0.5f; break;
         case '.': velocidad *= 2.0f; break;
         case ' ': pausado = !pausado; break;
-        case 'h': case 'H': mostrarHUD = !mostrarHUD; break;
         case 'r': case 'R': resetAll(); break;
     }
 }

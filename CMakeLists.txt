@@ -82,9 +82,6 @@ endif()
 set(CONVERSOR ${CMAKE_SOURCE_DIR}/tools/glb_a_obj.py)
 add_custom_target(modelos
     COMMAND ${PY} ${CONVERSOR} "${GLB}/International Space Station (ISS) (A).glb" ${MODELOS}/iss.obj
-    COMMAND ${PY} ${CONVERSOR} "${GLB}/Hubble Space Telescope (A).glb" ${MODELOS}/hubble.obj
-    COMMAND ${PY} ${CONVERSOR} "${GLB}/Cassini-Huygens (A).glb" ${MODELOS}/cassini.obj
     COMMAND ${PY} ${CONVERSOR} "${GLB}/Voyager Probe (A).glb" ${MODELOS}/voyager.obj
-    COMMAND ${PY} ${CONVERSOR} "${GLB}/1999 RQ36 asteroid.glb" ${MODELOS}/asteroide_bennu.obj
     VERBATIM
 )

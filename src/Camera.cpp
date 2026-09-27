@@ -20,23 +20,13 @@ float Camera::nearPlane() const {
     return PLANOS_CERCA[nivelCerca];
 }
 
-const char* Camera::modeName() const {
-    switch (modo) {
-        case GENERAL:  return "General";
-        case SUPERIOR: return "Superior";
-        case SEGUIR:   return "Seguir";
-        case RASANTE:  return "Rasante";
-    }
-    return "";
-}
-
 void Camera::setMode(Mode m, float radioObjetivo) {
     modo = m;
     switch (m) {
-        case GENERAL:  yaw = 30.0f; pitch = 28.0f; distancia = 78.0f;  break;
-        case SUPERIOR: yaw = 0.0f;  pitch = 89.0f; distancia = 105.0f; break;
+        case GENERAL:  yaw = 30.0f; pitch = 32.0f; distancia = 36.0f; break;
+        case SUPERIOR: yaw = 0.0f;  pitch = 89.0f; distancia = 58.0f; break;
         case SEGUIR:   yaw = 20.0f; pitch = 15.0f; distancia = radioObjetivo * 5.0f; break;
-        case RASANTE:  yaw = 10.0f; pitch = 3.0f;  distancia = 62.0f;  break;
+        case RASANTE:  yaw = 10.0f; pitch = 4.0f;  distancia = 34.0f; break;
     }
 }
 
