@@ -1,37 +1,56 @@
 // =============================================================
-//  Camera.hpp - Camara orbital y proyeccion perspectiva
+//  Camera.hpp - Camara orbital del Viewport y proyecciones
 //
 //  La camara gira alrededor de un punto objetivo usando coordenadas
-//  esfericas (yaw, pitch, distancia) y gluLookAt. La proyeccion es
-//  perspectiva con gluPerspective; los planos cercano y lejano
-//  definen el volumen de vision (lo que queda fuera se recorta).
+//  esfericas (yaw, pitch, distancia) y gluLookAt. El objetivo se puede
+//  desplazar (paneo) para recorrer la escena.
+//
+//  Proyeccion:
+//    perspectiva -> gluPerspective: lo lejano se ve mas pequeno
+//    ortogonal   -> glOrtho: sin perspectiva, las paralelas no se juntan
 // =============================================================
 #pragma once
 
+#include "Math.hpp"
+
 class Camera {
 public:
-    enum Mode {
-        GENERAL = 0,   // todo el sistema, vista en diagonal
-        SUPERIOR,      // desde arriba, se ven las orbitas completas
-        SEGUIR,        // sigue a un objeto (TAB cambia de objeto)
-        RASANTE        // casi al nivel del plano orbital
-    };
+    bool  ortogonal;
+    float yaw;          // giro horizontal (grados)
+    float pitch;        // elevacion (grados)
+    float distancia;    // distancia al objetivo
+    Vec3  objetivo;     // punto que mira la camara
+    float fov;          // campo de vision vertical (grados)
+    float cerca, lejos; // planos de recorte
 
-    Mode  modo;
-    float yaw;         // giro horizontal (grados)
-    float pitch;       // elevacion (grados)
-    float distancia;   // distancia al objetivo
-    int   objetivo;    // objeto seguido en modo SEGUIR
-    int   nivelCerca;  // indice del plano cercano (prueba de clipping)
-    float ojo[3];      // posicion calculada del observador (mundo)
+    Vec3  ojo;          // posicion calculada del observador (mundo)
 
     Camera();
+    void reset();
 
-    // radioObjetivo: tamano del objeto seguido, para elegir la distancia
-    void  setMode(Mode m, float radioObjetivo);
-    void  applyProjection(int ancho, int alto) const;
-    void  applyView(const float objetivoMundo[3]);   // gluLookAt
-    void  rotate(float dYaw, float dPitch);
-    void  zoom(float factor);
-    float nearPlane() const;
+    // Envian a OpenGL la proyeccion y la vista para el rectangulo del Viewport
+    void apply(int x, int y, int ancho, int alto);
+
+    void rotate(float dYaw, float dPitch);
+    void zoom(float factor);
+    void pan(float dx, float dy);                 // en pixeles de pantalla
+    void focus(const Vec3& punto, float radio);   // encuadra un objeto
+    void setView(float nuevoYaw, float nuevoPitch);
+
+    // Ejes de la camara en el mundo
+    Vec3 right() const;
+    Vec3 up() const;
+
+    // Conversion pantalla <-> mundo con las matrices del ultimo apply().
+    // Las coordenadas de pantalla son las de GLUT (origen arriba a la izquierda).
+    bool project(const Vec3& mundo, float& sx, float& sy) const;
+    void screenRay(int mx, int my, Vec3& origen, Vec3& direccion) const;
+    bool insideViewport(int mx, int my) const;
+    // Unidades de mundo que mide un pixel a la distancia de "punto"
+    float worldPerPixel(const Vec3& punto) const;
+
+private:
+    double modelo[16], proyeccion[16];
+    int    viewport[4];
+    int    altoVentana;
 };

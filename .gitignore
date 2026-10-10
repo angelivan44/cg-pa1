@@ -16,14 +16,16 @@
 !/include/
 !/third_party/
 !/tools/
+!/escenas/
 
 # tools/: solo los scripts, no el entorno de Python
 /tools/*
 !/tools/glb_a_obj.py
 
-# third_party/: solo la biblioteca stb_image
+# third_party/: solo stb_image y Dear ImGui
 /third_party/*
 !/third_party/stb_image.h
+!/third_party/imgui/
 
 # 3. Aunque esten dentro de src/ o include/, nunca subir:
 
@@ -64,7 +66,7 @@ __pycache__/
 
 # -------------------------------------------------------------
 #  Referencia: lo que queda fuera por la regla 1
-#    build/           compilacion de CMake
+#    build/           compilacion de CMake (el ejecutable editor3d)
 #    preview/         daemon de desarrollo (build y logs)
 #    assets/          texturas y modelos descargados (~26 MB)
 #    *.docx *.pdf     informe

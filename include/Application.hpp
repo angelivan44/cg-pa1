@@ -1,18 +1,17 @@
 // =============================================================
-//  Application.hpp - Ventana, OpenGL, entrada y bucle principal
+//  Application.hpp - Ventana, entrada y bucle principal
 //
-//  Une los modulos: crea la ventana con GLUT, configura OpenGL,
-//  recibe teclado y mouse, y en cada cuadro ordena el render:
-//  camara -> luces -> escena.
+//  Crea la ventana con GLUT, inicia Dear ImGui y reparte los eventos:
+//  primero los recibe la interfaz y, si no los usa (el cursor esta
+//  sobre el Viewport), se convierten en acciones del editor: orbitar
+//  la camara, seleccionar, arrastrar el gizmo o un atajo de teclado.
 //  GLUT solo acepta funciones sueltas como callbacks, por eso hay
 //  funciones estaticas que reenvian a la unica instancia.
 // =============================================================
 #pragma once
 
-#include "Camera.hpp"
-#include "Lighting.hpp"
-#include "RenderOptions.hpp"
-#include "Scene.hpp"
+#include "Editor.hpp"
+#include "EditorUI.hpp"
 
 class Application {
 public:
@@ -20,31 +19,28 @@ public:
     int run(int argc, char** argv);
 
 private:
-    Scene         escena;
-    Camera        camara;
-    Lighting      luces;
-    RenderOptions opciones;
+    enum Drag { NADA = 0, ORBITAR, DESPLAZAR, ZOOM, GIZMO };
 
-    int   anchoVentana, altoVentana;
-    bool  pausado;
-    float velocidad;          // multiplicador del tiempo de animacion
-    int   ultimoTiempo;       // ms, para medir el tiempo entre cuadros
-    int   botonMouse, mouseX, mouseY;
+    Editor   editor;
+    EditorUI ui;
 
-    void initOpenGL();
-    void render();
-    void resetAll();
-    void setCameraMode(Camera::Mode modo);
-    void printHelp() const;
+    int  ultimoTiempo;         // ms, para medir el tiempo entre cuadros
+    Drag arrastre;             // que hace el mouse mientras se arrastra
+    int  botonMouse;
+    int  mouseX, mouseY;       // ultima posicion
+    int  inicioX, inicioY;     // donde se presiono el boton
+    bool seMovio;              // el arrastre supero el umbral (no es un clic)
+    bool quitarFoco;           // clic en el Viewport: soltar los campos de texto
 
     // Manejo de eventos
     void onDisplay();
     void onReshape(int ancho, int alto);
     void onTimer();
-    void onKey(unsigned char tecla);
-    void onSpecialKey(int tecla);
+    void onKey(unsigned char tecla, int x, int y);
+    void onSpecialKey(int tecla, int x, int y);
     void onMouse(int boton, int estado, int x, int y);
     void onMotion(int x, int y);
+    void onWheel(int direccion);
 
     // Puentes de GLUT -> instancia
     static Application* instancia;
@@ -55,4 +51,6 @@ private:
     static void specialCallback(int tecla, int x, int y);
     static void mouseCallback(int boton, int estado, int x, int y);
     static void motionCallback(int x, int y);
+    static void passiveMotionCallback(int x, int y);
+    static void wheelCallback(int rueda, int direccion, int x, int y);
 };

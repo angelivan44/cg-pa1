@@ -1,65 +1,66 @@
 // =============================================================
-//  Scene.hpp - Construccion y renderizado del sistema solar
+//  Scene.hpp - Lista de objetos de la escena y su jerarquia
 //
-//  Escala: los tamanos, distancias y velocidades NO son reales; se
-//  eligieron para que todo quepa en pantalla y se note el movimiento,
-//  manteniendo el orden de los planetas y sus proporciones aproximadas.
+//  La escena ya no esta escrita en el codigo: es una lista dinamica
+//  de SceneObject que el usuario crea, borra, duplica y relaciona
+//  (padre-hijo) mientras el programa corre.
+//
+//  Modelado jerarquico: la matriz de mundo de un objeto es
+//      M_mundo = M_mundo(padre) * M_local
+//  por eso mover, girar o escalar al padre arrastra a sus hijos.
 // =============================================================
 #pragma once
 
-#include "GLHeaders.hpp"
-#include "Model.hpp"
-#include "RenderOptions.hpp"
+#include "Animation.hpp"
+#include "SceneObject.hpp"
 
+#include <string>
 #include <vector>
 
 class Scene {
 public:
+    std::vector<SceneObject*> objetos;
+    int   seleccion;            // id del objeto seleccionado, 0 = ninguno
+
+    // Entorno (se guarda con la escena)
+    float ambiente[3];          // luz ambiental global
+    float fondo[3];             // color de fondo del Viewport
+    bool  cuadricula;           // mostrar la cuadricula del suelo
+    float gravedad;             // aceleracion hacia -Y
+    bool  suelo;                // la fisica choca con un suelo horizontal
+    float alturaSuelo;
+
     Scene();
     ~Scene();
 
-    void init();                       // carga texturas y modelos (con contexto GL creado)
-    void update(float segundos);       // avanza la animacion
-    void setTime(float segundos);
-    void draw(const RenderOptions& opciones) const;
+    void         clear();
+    SceneObject* create(int tipo);                    // objeto nuevo con nombre unico
+    SceneObject* insert(const SceneObject& datos);    // copia tal cual (al cargar un archivo)
+    SceneObject* find(int id) const;
+    SceneObject* selected() const { return find(seleccion); }
+    void         remove(int id);                      // borra el objeto y sus descendientes
+    SceneObject* duplicate(int id);                   // copia el objeto y sus descendientes
 
-    // Objetos que puede seguir la camara (modo SEGUIR)
-    int         bodyCount() const;
-    const char* bodyName(int i) const;
-    int         findBody(const char* nombre) const;
-    void        bodyPosition(int i, float salida[3]) const;
-    float       bodyRadius(int i) const;
+    // Jerarquia
+    bool setParent(int hijo, int padre, bool mantenerMundo);
+    bool isDescendant(int id, int ancestro) const;
+    void children(int id, std::vector<SceneObject*>& salida) const;
+
+    std::string uniqueName(const std::string& base) const;
+
+    // Aplica las animaciones y recalcula las matrices de mundo
+    void updateTransforms(const Animator& animador);
+
+    // Seleccion con el mouse: id del objeto mas cercano que toca el rayo
+    int pick(const Vec3& origen, const Vec3& direccion) const;
 
 private:
-    // Cada cuerpo orbita alrededor de su padre (o del Sol si padre = -1)
-    // en el plano XZ. Si modelo es 0 se dibuja una esfera texturizada.
-    struct Body {
-        const char* nombre;
-        int         padre;
-        float       distancia;      // radio de la orbita
-        float       velOrbita;      // grados por segundo
-        float       fase;           // angulo inicial en la orbita (grados)
-        float       radio;          // radio de la esfera o escala del modelo
-        float       velRotacion;    // giro sobre su eje (grados por segundo)
-        float       ejeInclinado;   // inclinacion del eje (grados)
-        float       color[3];       // color del material cuando no hay textura
-        const char* archivo;        // textura de la esfera
-        Model*      modelo;
-        GLuint      textura;
-    };
+    int siguienteId;
+    int cuadro;
 
-    std::vector<Body>     cuerpos;
-    Model  modeloISS, modeloVoyager;          // modelos descargados de NASA
-    GLuint texAnillos, texHalo;
-    GLUquadric* cuadrica;
-    float  tiempo;                     // segundos de animacion transcurridos
+    void computeWorld(SceneObject* o);
+    SceneObject* duplicateTree(const SceneObject* original, int nuevoPadre);
 
-    float orbitAngle(int i) const;
-    void  applyOrbit(int i) const;     // transformacion jerarquica de un cuerpo
-
-    void drawSphere(float radio, const RenderOptions& o) const;
-    void drawOrbits(const RenderOptions& o) const;
-    void drawBody(int i, const RenderOptions& o) const;
-    void drawRings(const RenderOptions& o) const;
-    void drawSunGlow(const RenderOptions& o) const;
+    Scene(const Scene&);                 // no se copia
+    Scene& operator=(const Scene&);
 };

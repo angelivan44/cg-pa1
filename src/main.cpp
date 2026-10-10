@@ -1,10 +1,10 @@
 // =============================================================
-//  Sistema Solar - Computacion Grafica (PA3)
-//  Renderizado de una escena 3D con iluminacion, materiales,
-//  sombreado, texturas y visibilidad (OpenGL clasico + GLUT).
+//  Editor de Escenas 3D - Computacion Grafica (PA4)
+//  Aplicacion para crear, modificar, visualizar y animar escenas
+//  3D en tiempo de ejecucion (OpenGL clasico + GLUT + Dear ImGui).
 //
 //  Compilar:  cmake -S . -B build && cmake --build build
-//  Ejecutar:  ./build/sistema_solar
+//  Ejecutar:  ./build/editor3d
 // =============================================================
 #include "Application.hpp"
 

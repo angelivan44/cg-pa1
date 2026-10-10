@@ -1,28 +1,28 @@
 // =============================================================
-//  Lighting.hpp - Fuentes de luz de la escena
+//  Lighting.hpp - Iluminacion de la escena
 //
-//  GL_LIGHT0  luz PUNTUAL en el centro del Sol (w = 1). Ilumina cada
-//             planeta desde el Sol, asi la cara que mira al Sol es de
-//             dia y la opuesta de noche. Tiene atenuacion cuadratica:
-//             los planetas lejanos reciben menos luz.
-//  GL_LIGHT1  luz DIRECCIONAL de relleno (w = 0), tenue y azulada.
-//             Simula la luz reflejada / de las estrellas para que el
-//             lado nocturno no quede totalmente negro.
-//  Ambiente   luz ambiental global (glLightModel), igual para todo.
+//  Las luces son objetos de la escena (tipo Luz): se crean, mueven,
+//  giran y animan como cualquier otro, y pueden colgar de un padre.
+//  En cada cuadro este modulo las recorre y configura GL_LIGHT0..7:
+//
+//    puntual      w = 1, emite en todas direcciones desde su posicion
+//    direccional  w = 0, rayos paralelos (como el Sol visto de lejos)
+//    foco         puntual + cono (GL_SPOT_CUTOFF / GL_SPOT_EXPONENT)
+//
+//  Las direccionales y los focos apuntan hacia el -Y local del objeto.
+//  Cada luz aporta componente ambiental, difusa y especular; ademas
+//  hay una luz ambiental global (glLightModel).
 // =============================================================
 #pragma once
 
+#include "Scene.hpp"
+
 class Lighting {
 public:
-    bool  solActiva;        // GL_LIGHT0 encendida
-    bool  rellenoActivo;    // GL_LIGHT1 encendida
-    int   nivelAmbiente;    // 0 = nada, 1 = bajo, 2 = alto
-    bool  atenuacion;       // atenuacion con la distancia en la luz del Sol
-    float anguloRelleno;    // direccion horizontal de la luz de relleno (grados)
+    enum { MAX_LUCES = 8 };
 
-    Lighting();
-    void  reset();
-    void  init() const;      // una vez, al iniciar OpenGL
-    void  update() const;    // cada cuadro, DESPUES de cargar la matriz de vista
-    float ambientValue() const;
+    void init() const;      // una vez, al iniciar OpenGL
+    // Cada cuadro, DESPUES de cargar la matriz de vista.
+    // Devuelve cuantas luces quedaron encendidas.
+    int  apply(const Scene& escena) const;
 };

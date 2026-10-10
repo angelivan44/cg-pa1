@@ -80,22 +80,27 @@ static int indiceOBJ(int i, int total) {
 
 static void compilarLista(const std::vector<Tramo>& tramos, const std::vector<MaterialOBJ>& mats,
                           const std::vector<float>& pos, const std::vector<float>& uv,
-                          const std::vector<float>& nor, bool conTextura) {
+                          const std::vector<float>& nor, Model::DrawMode modo) {
     for (size_t i = 0; i < tramos.size(); i++) {
         const MaterialOBJ& m = mats[tramos[i].material];
-        float emision[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,   m.ka);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,   m.kd);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  m.ks);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION,  emision);
-        glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, m.ns);
+        // En modo GEOMETRIA no se toca el estado: el material y la
+        // textura los decide el objeto del editor antes de dibujar.
+        bool textura = modo == Model::GEOMETRIA;
+        if (modo != Model::GEOMETRIA) {
+            float emision[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,   m.ka);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,   m.kd);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  m.ks);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION,  emision);
+            glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, m.ns);
 
-        bool textura = conTextura && m.textura != 0;
-        if (textura) {
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, m.textura);
-        } else {
-            glDisable(GL_TEXTURE_2D);
+            textura = modo == Model::CON_TEXTURAS && m.textura != 0;
+            if (textura) {
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, m.textura);
+            } else {
+                glDisable(GL_TEXTURE_2D);
+            }
         }
 
         const std::vector<Esquina>& e = tramos[i].esquinas;
@@ -122,10 +127,12 @@ static void compilarLista(const std::vector<Tramo>& tramos, const std::vector<Ma
         }
         glEnd();
     }
-    glDisable(GL_TEXTURE_2D);
+    if (modo != Model::GEOMETRIA) glDisable(GL_TEXTURE_2D);
 }
 
-Model::Model() : listaConTextura(0), listaSinTextura(0), triangulos(0), cargado(false) {}
+Model::Model()
+    : minimo(-1.0f, -1.0f, -1.0f), maximo(1.0f, 1.0f, 1.0f),
+      listas(0), triangulos(0), cargado(false) {}
 
 bool Model::load(const std::string& ruta) {
     cargado = false;
@@ -214,15 +221,20 @@ bool Model::load(const std::string& ruta) {
     for (size_t i = 0; i < pos.size(); i += 3)
         for (int k = 0; k < 3; k++) pos[i + k] = (pos[i + k] - centro[k]) / radio;
 
-    // Se compila dos veces: con texturas y sin ellas (para la prueba T)
-    listaConTextura = glGenLists(2);
-    listaSinTextura = listaConTextura + 1;
-    glNewList(listaConTextura, GL_COMPILE);
-    compilarLista(tramos, materiales, pos, uv, nor, true);
-    glEndList();
-    glNewList(listaSinTextura, GL_COMPILE);
-    compilarLista(tramos, materiales, pos, uv, nor, false);
-    glEndList();
+    for (int k = 0; k < 3; k++) {
+        minimo[k] = (minimo[k] - centro[k]) / radio;
+        maximo[k] = (maximo[k] - centro[k]) / radio;
+    }
+    this->minimo = Vec3(minimo[0], minimo[1], minimo[2]);
+    this->maximo = Vec3(maximo[0], maximo[1], maximo[2]);
+
+    // Se compila una display list por cada modo de dibujo
+    listas = glGenLists(NUM_MODOS);
+    for (int modo = 0; modo < NUM_MODOS; modo++) {
+        glNewList(listas + modo, GL_COMPILE);
+        compilarLista(tramos, materiales, pos, uv, nor, (DrawMode)modo);
+        glEndList();
+    }
 
     cargado = true;
     size_t barra = ruta.find_last_of("/\\");
@@ -232,11 +244,11 @@ bool Model::load(const std::string& ruta) {
     return true;
 }
 
-void Model::draw(bool conTexturas) const {
+void Model::draw(DrawMode modo) const {
     if (!cargado) return;
     // Los modelos tienen piezas delgadas (paneles, antenas) que se ven
     // por ambos lados: se ilumina tambien la cara trasera.
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-    glCallList(conTexturas ? listaConTextura : listaSinTextura);
+    glCallList(listas + modo);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 }

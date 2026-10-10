@@ -1,34 +1,35 @@
 // =============================================================
-//  RenderOptions.hpp - Parametros de renderizado para experimentar
+//  RenderOptions.hpp - Opciones de visualizacion del Viewport
 //
-//  Cada campo se cambia con una tecla (ver Application.cpp) y permite
-//  comparar el resultado visual con el parametro activado o no.
+//  Son opciones de la vista, no de la escena: no se guardan en el
+//  archivo. Se cambian desde el menu Ver, la barra del Viewport o
+//  el panel Vista.
 // =============================================================
 #pragma once
 
 struct RenderOptions {
-    bool texturas;           // T: texturas activadas
-    bool gouraud;            // G: sombreado suave (Gouraud) o plano (Flat)
-    int  detalleMalla;       // V: 0 bajo, 1 medio, 2 alto (divisiones de las esferas)
-    bool materialBrillante;  // M: planetas mate o con brillo especular
-    bool depthBuffer;        // Z: prueba de profundidad activada
-    bool transparencias;     // B: mezcla alfa (anillos) y halo del Sol
-    bool orbitas;            // O: lineas de las orbitas
+    bool wireframe;      // malla de alambre o solido
+    bool gouraud;        // sombreado suave (Gouraud) o plano (Flat)
+    bool texturas;       // texturas activadas
+    bool iluminacion;    // calculo de luces activado
+    bool depthBuffer;    // prueba de profundidad
+    bool ayudas;         // iconos de luces, vacios y emisores
+    int  detalleMalla;   // 0 bajo, 1 medio, 2 alto (divisiones de las primitivas)
 
     RenderOptions() { reset(); }
 
     void reset() {
-        texturas          = true;
-        gouraud           = true;
-        detalleMalla      = 2;
-        materialBrillante = false;
-        depthBuffer       = true;
-        transparencias    = true;
-        orbitas           = true;
+        wireframe    = false;
+        gouraud      = true;
+        texturas     = true;
+        iluminacion  = true;
+        depthBuffer  = true;
+        ayudas       = true;
+        detalleMalla = 2;
     }
 
-    int sphereDivisions() const {
-        static const int DIVISIONES[] = { 10, 24, 64 };
+    int divisions() const {
+        static const int DIVISIONES[] = { 10, 24, 48 };
         return DIVISIONES[detalleMalla];
     }
 };

@@ -46,3 +46,14 @@
 inline std::string assetPath(const std::string& relativa) {
     return std::string(ASSETS_DIR) + relativa;
 }
+
+// --- Carpeta de escenas guardadas ----------------------------------
+// CMake define SCENES_DIR con la ruta absoluta a escenas/; ahi se
+// guardan y se buscan los archivos .escena del editor.
+#ifndef SCENES_DIR
+  #define SCENES_DIR "escenas/"
+#endif
+
+inline std::string scenePath(const std::string& relativa) {
+    return std::string(SCENES_DIR) + relativa;
+}

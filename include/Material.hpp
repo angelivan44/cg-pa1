@@ -1,28 +1,36 @@
 // =============================================================
 //  Material.hpp - Propiedades de material (modelo de Phong)
 //
-//  Cada material define como refleja la luz un objeto:
-//    ambiente  -> luz indirecta que recibe aunque no le de el Sol
-//    difuso    -> reflexion Lambert (depende del angulo N.L)
-//    especular -> brillo (depende del angulo R.V y del exponente)
-//    emision   -> luz propia (el objeto se ve aunque no haya luces)
+//  Cada objeto del editor tiene su propio material. Define como
+//  refleja la luz:
+//    color     -> color base del objeto
+//    ambiente  -> cuanto refleja la luz indirecta (ka)
+//    difuso    -> reflexion Lambert, depende del angulo N.L (kd)
+//    especular -> brillo, depende del angulo R.V y del exponente (ks)
 //    brillo    -> exponente especular (0..128, mas alto = brillo mas chico)
+//    emision   -> luz propia (el objeto se ve aunque no haya luces)
+//    opacidad  -> 1 = opaco; menos de 1 se mezcla con lo que hay detras
 // =============================================================
 #pragma once
 
 struct Material {
-    float ambiente[4];
-    float difuso[4];
-    float especular[4];
-    float emision[4];
+    float color[3];
+    float ambiente;
+    float difuso;
+    float especular;
     float brillo;
+    float emision;
+    float opacidad;
+    bool  mezcla;       // dibujar con mezcla alfa (transparencias, texturas RGBA)
 
-    void apply() const;
+    Material();
 
-    // Planetas: mate (sin especular) o brillante (especular alto)
-    static Material planet(bool brillante);
-    // Sol: emisivo, no necesita luces para verse
-    static Material sun();
-    // Anillos de Saturno: algo de ambiente para que no desaparezcan
-    static Material rings();
+    // Envia el material a OpenGL. Sin iluminacion solo se usa el color.
+    void apply(bool iluminacion) const;
+    bool isTransparent() const { return mezcla || opacidad < 0.999f; }
+
+    // Materiales predefinidos para elegir desde el editor
+    static int         presetCount();
+    static const char* presetName(int i);
+    static Material    preset(int i, const Material& actual);
 };
